@@ -107,6 +107,9 @@ class Parser(tokens: ArrayList[Token]):
                     _ <- consume(RIGHT_PAREN, "Expect ')' after expression.")
                 yield
                     Grouping(e)
+            case PLUS | SLASH | STAR =>
+                error(peek(), s"${token.lexeme} is not a unary operator. It requires both left and right expressions.")
+                consume(NUMBER, "Expect a number.").map(_ => Nil)
             case _ =>
                 Left(error(peek(), "Expect expression."))
 

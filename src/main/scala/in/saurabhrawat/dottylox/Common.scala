@@ -33,4 +33,9 @@ def reportError(t: Token, erMsg: String) =
     else
         Main.report(t.line, s" at '${t.lexeme}'", erMsg)
 
+def runtimeError(err: RuntimeError) =
+  println(s"${err.erMsg}\n[line ${err.op.line}]")
+
 case object ParseError
+
+case class RuntimeError(op: Token, erMsg: String)

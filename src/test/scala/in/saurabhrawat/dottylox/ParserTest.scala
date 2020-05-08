@@ -34,4 +34,4 @@ class ParserTest:
     val scanner = Scanner(source)
     val parser = Parser(scanner.scanTokens())
     val expr = parser.parse().right.get
-    assertEquals(AstPrinter.print(expr), "(? (== 1 2) (: (? (== 3 4) (: 20 30)) 40))")
+    assertEquals(AstPrinter.print(expr), "(? (== 1 2) (? (== 2 3) (: (? (== 3 4) (: (? (== 4 5) (: 20 30)) 40)) (? (== 5 6) (: 50 60)))))")

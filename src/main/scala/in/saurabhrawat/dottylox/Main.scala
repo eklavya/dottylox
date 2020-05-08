@@ -7,6 +7,7 @@ import java.io.InputStreamReader
 import java.io.BufferedReader
 import in.saurabhrawat.dottylox.parser.Parser
 import in.saurabhrawat.dottylox.parser.AstPrinter
+import in.saurabhrawat.dottylox.interpreter.Interpreter
 
 object Main:
 
@@ -23,8 +24,10 @@ object Main:
 
   def runFile(file: String): Unit =
     val bytes = Files.readAllBytes(Paths.get(file))
-    run(new String(bytes, Charset.defaultCharset())).left.foreach
-        System.exit(65)
+    run(new String(bytes, Charset.defaultCharset())).left.foreach {
+        case ParseError => System.exit(65)
+        case RuntimeError => System.exit(70)
+    }
 
   def runPrompt(): Unit = 
     val input = new InputStreamReader(System.in)
@@ -40,11 +43,12 @@ object Main:
   def run(source: String): Either[_, Unit] =
     val scanner = new Scanner(source)
     val tokens = scanner.scanTokens()
-    println(tokens)
+    // println(tokens)
     val parser = Parser(tokens)
-    parser.parse().map { ex =>
-      println(AstPrinter.print(ex))
-    }
+    for 
+      ex <- parser.parse()
+      res <- Interpreter.eval(ex)
+    yield println(res)
   
   def error(line: Int, message: String): Unit =
     report(line, "", message)
