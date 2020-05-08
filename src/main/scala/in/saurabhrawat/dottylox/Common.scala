@@ -36,6 +36,8 @@ def reportError(t: Token, erMsg: String) =
 def runtimeError(err: RuntimeError) =
   println(s"${err.erMsg}\n[line ${err.op.line}]")
 
-case object ParseError
+sealed trait Error
 
-case class RuntimeError(op: Token, erMsg: String)
+case object ParseError extends Error
+
+case class RuntimeError(op: Token, erMsg: String) extends Error

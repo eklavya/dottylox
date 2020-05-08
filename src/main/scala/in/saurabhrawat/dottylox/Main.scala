@@ -26,7 +26,7 @@ object Main:
     val bytes = Files.readAllBytes(Paths.get(file))
     run(new String(bytes, Charset.defaultCharset())).left.foreach {
         case ParseError => System.exit(65)
-        case RuntimeError => System.exit(70)
+        case RuntimeError(_, _) => System.exit(70)
     }
 
   def runPrompt(): Unit = 
@@ -37,10 +37,13 @@ object Main:
       print("> ")
       val entered = reader.readLine
       if entered == "exit" then exited = true 
-      else run(entered)
+      else run(entered).left.foreach {
+        case ParseError =>
+        case e@RuntimeError(_, _) => runtimeError(e)
+      }
       // hadError = false
 
-  def run(source: String): Either[_, Unit] =
+  def run(source: String): Either[Error, Unit] =
     val scanner = new Scanner(source)
     val tokens = scanner.scanTokens()
     // println(tokens)

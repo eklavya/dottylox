@@ -26,74 +26,75 @@ object Interpreter:
                 for
                     l <- eval(left)
                     r <- eval(right)
-                    res <- (l, r, op.tokenType) match
-                        case (l: Double, r: Double, tt: PLUS.type) =>
-                            Right(numberOps(l, r, tt))
-                        case (l: Int, r: Int, tt: PLUS.type) =>
-                            Right(numberOps(l, r, tt))
-                        case (l: Double, r: Double, tt: MINUS.type) =>
-                            Right(numberOps(l, r, tt))
-                        case (l: Int, r: Int, tt: MINUS.type) =>
-                            Right(numberOps(l, r, tt))
-                        case (l: Double, r: Double, tt: STAR.type) =>
-                            Right(numberOps(l, r, tt))
-                        case (l: Int, r: Int, tt: STAR.type) =>
-                            Right(numberOps(l, r, tt))
-                        case (l: Double, r: Double, tt: SLASH.type) =>
-                            Right(l / r)
-                        case (l: Int, r: Int, tt: SLASH.type) =>
-                            Right(l / r)
-                        case (l: Double, r: Int, tt: PLUS.type) =>
-                            Right(l / r)
-                        case (l: Int, r: Double, tt: PLUS.type) =>
-                            Right(l / r)
-                        case (l: String, r: String, tt: PLUS.type) =>
-                            Right(l + r)
-                        case (l: Double, r: Double, tt: GREATER.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: Double, r: Double, tt: GREATER_EQUAL.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: Double, r: Double, tt: LESS.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: Double, r: Double, tt: LESS_EQUAL.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: Int, r: Int, tt: GREATER.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: Int, r: Int, tt: GREATER_EQUAL.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: Int, r: Int, tt: LESS.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: Int, r: Int, tt: LESS_EQUAL.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: String, r: String, tt: GREATER.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: String, r: String, tt: GREATER_EQUAL.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: String, r: String, tt: LESS.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l: String, r: String, tt: LESS_EQUAL.type) =>
-                            Right(ordOps(l, r, tt))
-                        case (l, r, EQUAL_EQUAL) =>
-                            Right(isEqual(l, r))
-                        case (l, r, BANG_EQUAL) =>
-                            Right(!isEqual(l, r))
-                        case (l, r, _) =>
-                            Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between l: ${l.getClass.getSimpleName} and r: ${r.getClass.getSimpleName}"))
+                    res <- op.tokenType match
+                            case PLUS =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l + r)
+                                    case (l: Int, r: Int) => Right(l + r)
+                                    case (l: Double, r: Int) => Right(l + r)
+                                    case (l: Int, r: Double) => Right(l + r)
+                                    case (l: String, r: String) => Right(l + r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case MINUS =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l - r)
+                                    case (l: Int, r: Int) => Right(l - r)
+                                    case (l: Double, r: Int) => Right(l - r)
+                                    case (l: Int, r: Double) => Right(l - r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case STAR =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l * r)
+                                    case (l: Int, r: Int) => Right(l * r)
+                                    case (l: Double, r: Int) => Right(l * r)
+                                    case (l: Int, r: Double) => Right(l * r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case SLASH =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l / r)
+                                    case (l: Int, r: Int) => Right(l / r)
+                                    case (l: Double, r: Int) => Right(l / r)
+                                    case (l: Int, r: Double) => Right(l / r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case GREATER =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l > r)
+                                    case (l: Int, r: Int) => Right(l > r)
+                                    case (l: Double, r: Int) => Right(l > r)
+                                    case (l: Int, r: Double) => Right(l > r)
+                                    case (l: String, r: String) => Right(l > r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case LESS =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l < r)
+                                    case (l: Int, r: Int) => Right(l < r)
+                                    case (l: Double, r: Int) => Right(l < r)
+                                    case (l: Int, r: Double) => Right(l < r)
+                                    case (l: String, r: String) => Right(l < r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case LESS_EQUAL =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l <= r)
+                                    case (l: Int, r: Int) => Right(l <= r)
+                                    case (l: Double, r: Int) => Right(l <= r)
+                                    case (l: Int, r: Double) => Right(l <= r)
+                                    case (l: String, r: String) => Right(l <= r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case GREATER_EQUAL =>
+                                (l, r) match
+                                    case (l: Double, r: Double) => Right(l >= r)
+                                    case (l: Int, r: Int) => Right(l >= r)
+                                    case (l: Double, r: Int) => Right(l >= r)
+                                    case (l: Int, r: Double) => Right(l >= r)
+                                    case (l: String, r: String) => Right(l >= r)
+                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                            case EQUAL_EQUAL => Right(isEqual(l, r))
+                            case BANG_EQUAL => Right(!isEqual(l, r))
+                            case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
                 yield res
-                        
-    def numberOps[T: Numeric](i1: T, i2: T, op: PLUS.type | MINUS.type | STAR.type)(using ops: Numeric[T]): T =
-        op match
-            case op: PLUS.type => ops.plus(i1, i2)
-            case op: MINUS.type => ops.minus(i1, i2)
-            case op: STAR.type => ops.times(i1, i2)
             
-    def ordOps[T](i1: T, i2: T, op: GREATER.type | LESS.type | LESS_EQUAL.type | GREATER_EQUAL.type)(using ops: Ordering[T]): Boolean =
-        op match
-            case op: GREATER.type => ops.gt(i1, i2)
-            case op: GREATER_EQUAL.type => ops.gteq(i1, i2)
-            case op: LESS.type => ops.lt(i1, i2)
-            case op: LESS_EQUAL.type => ops.lteq(i1, i2)
-
+            case Nil => Right(())
+                        
     def isEqual(l: Any, r: Any) =
         if l == null && r == null then true
         else if l == null then false
