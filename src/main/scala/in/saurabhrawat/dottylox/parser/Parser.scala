@@ -4,17 +4,34 @@ import in.saurabhrawat.dottylox._
 import in.saurabhrawat.dottylox.TokenType._
 import Expr._
 import java.util.ArrayList
+import Stmt._
+import in.saurabhrawat.dottylox.Error._
+import in.saurabhrawat.dottylox.Error
 
 
 class Parser(tokens: ArrayList[Token]):
 
     private var current = 0
 
-    def expression() = comma()
+    def expression() = assignment()
+
+    def assignment(): Either[Error, Expr] = 
+        val left = comma()
+        if matchOp(EQUAL)
+            val equals = previous()
+            for
+                rValue <- assignment()
+                lValue <- left
+                res <- lValue match
+                            case Variable(name) =>
+                                Right(Assign(name, rValue))
+                            case _ => Left(error(equals, "invalid assignment"))
+            yield res
+        else left
 
     def comma() = getExpression(question, COMMA)
 
-    def getExpression(getExp: () => Either[ParseError.type, Expr], ops: TokenType*): Either[ParseError.type, Expr] =
+    def getExpression(getExp: () => Either[Error, Expr], ops: TokenType*): Either[Error, Expr] =
         var e = getExp()
         
         while matchOp(ops: _*) do
@@ -27,8 +44,21 @@ class Parser(tokens: ArrayList[Token]):
             }
         e
 
-    def question(): Either[ParseError.type, Expr] = 
-        var e = equality()
+    def getLogicalExpression(getExp: () => Either[Error, Expr], ops: TokenType*): Either[Error, Expr] =
+        var e = getExp()
+        
+        while matchOp(ops: _*) do
+            val op = previous()
+            e = e.flatMap { ex =>
+                for
+                    right <- getExp()
+                yield
+                    Logical(ex, op, right)
+            }
+        e
+
+    def question(): Either[Error, Expr] = 
+        var e = or()
         
         if matchOp(QUESTION)
             val op = previous()
@@ -52,6 +82,10 @@ class Parser(tokens: ArrayList[Token]):
                     Binary(ex, op, right)
             }
         e
+
+    def or() = getLogicalExpression(and, OR)
+
+    def and() = getLogicalExpression(equality, AND)
 
     def equality() = getExpression(comparison, BANG_EQUAL, EQUAL_EQUAL)
         
@@ -83,7 +117,7 @@ class Parser(tokens: ArrayList[Token]):
 
     def multiplication() = getExpression(unary, SLASH, STAR)
 
-    def unary(): Either[ParseError.type, Expr] =
+    def unary(): Either[Error, Expr] =
         if matchOp(BANG, MINUS)
             val op = previous()
             for 
@@ -93,7 +127,7 @@ class Parser(tokens: ArrayList[Token]):
         else
             primary()
 
-    def primary(): Either[ParseError.type, Expr] =
+    def primary(): Either[Error, Expr] =
         val token = advance()
         token.tokenType match
             case FALSE => Right(Literal(false))
@@ -110,16 +144,17 @@ class Parser(tokens: ArrayList[Token]):
             case PLUS | SLASH | STAR =>
                 error(peek(), s"${token.lexeme} is not a unary operator. It requires both left and right expressions.")
                 consume(NUMBER, "Expect a number.").map(_ => Nil)
+            case IDENTIFIER => Right(Variable(previous()))
             case _ =>
                 Left(error(peek(), "Expect expression."))
 
-    def consume(t: TokenType, erMsg: String): Either[ParseError.type, Token] = 
+    def consume(t: TokenType, erMsg: String): Either[Error, Token] = 
         if check(t) then Right(advance())
         else Left(error(peek(), erMsg))
 
-    def error(t: Token, erMsg: String): ParseError.type =
+    def error(t: Token, erMsg: String): Error =
         reportError(t, erMsg)
-        ParseError
+        Error.ParseError
 
     def synchronise(): Unit =
         advance()
@@ -139,7 +174,76 @@ class Parser(tokens: ArrayList[Token]):
                     case RETURN => 
                     case _ => synchronise()
 
-    def parse(): Either[ParseError.type, Expr] = expression()
+    def printStatement() =
+        for
+            e <- expression()
+            _ <- consume(SEMICOLON, "Expected ';' after value.")
+        yield Print(e)
+
+    def expressionStatement() =
+        for
+            e <- expression()
+            _ <- consume(SEMICOLON, "Expected ';' after value.")
+        yield Expression(e)
+
+    def statement() =
+        if matchOp(PRINT)
+            printStatement()
+        else if matchOp(LEFT_BRACE)
+            block()
+        else if matchOp(IF)
+            ifStmt()
+        else expressionStatement()
+
+    def varDeclaration() =
+        for 
+            name <- consume(IDENTIFIER, "Expected variable name here.")
+            ex <- if matchOp(EQUAL) then expression() else Right(Nil)
+            _ <- consume(SEMICOLON, "Expected ; after variable declaration.")
+        yield 
+            ex match
+                case Nil => Var(name, None)
+                case _ => Var(name, Some(ex))
+            
+
+    def declaration() =
+        val d = if matchOp(VAR) then varDeclaration() else statement()
+        if d.isLeft
+            synchronise()
+            Right(Expression(Nil))
+        else d
+
+    def block(stmts: Vector[Stmt] = Vector.empty): Either[Error, Stmt] =
+        if !check(RIGHT_BRACE) && !isAtEnd()
+            declaration().flatMap(d => block(stmts :+ d))
+        else
+            consume(RIGHT_BRACE, "Expected closing } after block").map { _ =>
+                Block(stmts)
+            }
+
+    def ifStmt(): Either[Error, Stmt] =
+        for
+            _ <- consume(LEFT_PAREN, "Expect a condition after if starting with (")
+            cond <- expression()
+            _ <- consume(RIGHT_PAREN, "Expected )")
+            thenBranch <- statement()
+            res <- if matchOp(ELSE)
+                        statement().map { elseBranch =>
+                            If(cond, thenBranch, Some(elseBranch))
+                        }
+            else
+                Right(If(cond, thenBranch, None))
+        yield
+            res
+
+    def parse(stmts: Vector[Stmt] = Vector.empty): Either[Error, Vector[Stmt]] = 
+        if !isAtEnd()
+            for
+                s <- declaration()
+                res <- parse(stmts :+ s)
+            yield res
+        else Right(stmts)
+            
 
     
     

@@ -7,5 +7,8 @@ enum Expr {
     case Unary(operator: Token, right: Expr)
     case Grouping(expr: Expr)
     case Literal(lit: String | Double | Int | Boolean)
+    case Variable(name: Token)
+    case Assign(name: Token, value: Expr)
+    case Logical(left: Expr, op: Token, right: Expr)
     case Nil
 }

@@ -1,6 +1,15 @@
 package in.saurabhrawat.dottylox
 
+enum Error {
+  case ParseError
+  case RuntimeError(op: Token, erMsg: String)
+}
+
+import Error._
+
 type LiteralType = String | Double | Int | Boolean
+
+type Result = String | Int | Double | Boolean| Unit
 
 case class Token(tokenType: TokenType, lexeme: String, literal: Option[LiteralType], line: Int):
     override def toString() = s"$tokenType $lexeme $literal"
@@ -35,9 +44,3 @@ def reportError(t: Token, erMsg: String) =
 
 def runtimeError(err: RuntimeError) =
   println(s"${err.erMsg}\n[line ${err.op.line}]")
-
-sealed trait Error
-
-case object ParseError extends Error
-
-case class RuntimeError(op: Token, erMsg: String) extends Error

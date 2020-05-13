@@ -22,16 +22,16 @@ class ParserTest:
 
   @Test
   def parseTernary1(): Unit =
-    val source = "1 == 2 ? 3 == 4 ? 20 : 30 : 40"
+    val source = "1 == 2 ? 3 == 4 ? 20 : 30 : 40;"
     val scanner = Scanner(source)
     val parser = Parser(scanner.scanTokens())
-    val expr = parser.parse().right.get
-    assertEquals(AstPrinter.print(expr), "(? (== 1 2) (: (? (== 3 4) (: 20 30)) 40))")
+    val stmts = parser.parse().right.get
+    assertEquals(AstPrinter.printStmts(stmts), "Expression((? (== 1 2) (: (? (== 3 4) (: 20 30)) 40)))")
 
   @Test
   def parseTernary2(): Unit =
-    val source = "1 == 2 ? 2 == 3 ? 3 == 4 ? 4 == 5 ? 20 : 30 : 40 : 5 == 6 ? 50 : 60"
+    val source = "1 == 2 ? 2 == 3 ? 3 == 4 ? 4 == 5 ? 20 : 30 : 40 : 5 == 6 ? 50 : 60;"
     val scanner = Scanner(source)
     val parser = Parser(scanner.scanTokens())
-    val expr = parser.parse().right.get
-    assertEquals(AstPrinter.print(expr), "(? (== 1 2) (? (== 2 3) (: (? (== 3 4) (: (? (== 4 5) (: 20 30)) 40)) (? (== 5 6) (: 50 60)))))")
+    val stmts = parser.parse().right.get
+    assertEquals(AstPrinter.printStmts(stmts), "Expression((? (== 1 2) (? (== 2 3) (: (? (== 3 4) (: (? (== 4 5) (: 20 30)) 40)) (? (== 5 6) (: 50 60))))))")
