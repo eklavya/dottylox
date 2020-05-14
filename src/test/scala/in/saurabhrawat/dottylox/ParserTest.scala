@@ -30,8 +30,8 @@ class ParserTest:
 
   @Test
   def parseTernary2(): Unit =
-    val source = "1 == 2 ? 2 == 3 ? 3 == 4 ? 4 == 5 ? 20 : 30 : 40 : 5 == 6 ? 50 : 60;"
+    val source = "var a = 1 == 2 ? 2 == 3 ? 3 == 4 ? 4 == 5 ? 20 : 30 : 40 : 5 == 6 ? 50 : 60;"
     val scanner = Scanner(source)
     val parser = Parser(scanner.scanTokens())
     val stmts = parser.parse().right.get
-    assertEquals(AstPrinter.printStmts(stmts), "Expression((? (== 1 2) (? (== 2 3) (: (? (== 3 4) (: (? (== 4 5) (: 20 30)) 40)) (? (== 5 6) (: 50 60))))))")
+    assertEquals(AstPrinter.printStmts(stmts), "Var(a, (? (== 1 2) (? (== 2 3) (: (? (== 3 4) (: (? (== 4 5) (: 20 30)) 40)) (? (== 5 6) (: 50 60))))))")

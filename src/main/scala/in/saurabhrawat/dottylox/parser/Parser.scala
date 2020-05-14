@@ -193,6 +193,10 @@ class Parser(tokens: ArrayList[Token]):
             block()
         else if matchOp(IF)
             ifStmt()
+        else if matchOp(WHILE)
+            whileStmt()
+        else if matchOp(FOR)
+            forStmt()
         else expressionStatement()
 
     def varDeclaration() =
@@ -235,6 +239,33 @@ class Parser(tokens: ArrayList[Token]):
                 Right(If(cond, thenBranch, None))
         yield
             res
+
+    def whileStmt(): Either[Error, Stmt] = 
+        for
+            _ <- consume(LEFT_PAREN, "Expect a condition after while starting with (")
+            cond <- expression()
+            _ <- consume(RIGHT_PAREN, "Expected )")
+            stmt <- statement()
+        yield While(cond, stmt)
+
+    def forStmt(): Either[Error, Stmt] =
+        for
+            _ <- consume(LEFT_PAREN, "Expect a condition after while starting with (")
+            init <- if matchOp(SEMICOLON)
+                Right(Empty)
+                else if matchOp(VAR)
+                    varDeclaration()
+                else expressionStatement()
+            chk <- if check(SEMICOLON)
+                Right(Nil)
+                else expression()
+            _ <- consume(SEMICOLON, "Expected ;")
+            inc <- if check(RIGHT_PAREN)
+                Right(Nil)
+                else expression()
+            _ <- consume(RIGHT_PAREN, "Expected )")
+            body <- statement()
+        yield Block(Vector(init, While(chk, Block(Vector(body, Expression(inc))))))
 
     def parse(stmts: Vector[Stmt] = Vector.empty): Either[Error, Vector[Stmt]] = 
         if !isAtEnd()

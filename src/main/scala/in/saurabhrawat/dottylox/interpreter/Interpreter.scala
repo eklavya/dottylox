@@ -29,78 +29,89 @@ object Interpreter:
                 yield res
 
             case Binary(left, op, right) =>
-                for
-                    l <- eval(left, env)
-                    r <- eval(right, env)
-                    res <- op.tokenType match
-                            case PLUS =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l + r)
-                                    case (l: Int, r: Int) => Right(l + r)
-                                    case (l: Double, r: Int) => Right(l + r)
-                                    case (l: Int, r: Double) => Right(l + r)
-                                    case (l: String, r) => Right(l + r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case MINUS =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l - r)
-                                    case (l: Int, r: Int) => Right(l - r)
-                                    case (l: Double, r: Int) => Right(l - r)
-                                    case (l: Int, r: Double) => Right(l - r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case STAR =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l * r)
-                                    case (l: Int, r: Int) => Right(l * r)
-                                    case (l: Double, r: Int) => Right(l * r)
-                                    case (l: Int, r: Double) => Right(l * r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case SLASH =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l / r)
-                                    case (l: Int, r: Int) => 
-                                        if r == 0 
-                                            Left(RuntimeError(op, s"tried to divide $l by 0"))
-                                        else Right(l / r)
-                                    case (l: Double, r: Int) => Right(l / r)
-                                    case (l: Int, r: Double) => Right(l / r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case GREATER =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l > r)
-                                    case (l: Int, r: Int) => Right(l > r)
-                                    case (l: Double, r: Int) => Right(l > r)
-                                    case (l: Int, r: Double) => Right(l > r)
-                                    case (l: String, r: String) => Right(l > r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case LESS =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l < r)
-                                    case (l: Int, r: Int) => Right(l < r)
-                                    case (l: Double, r: Int) => Right(l < r)
-                                    case (l: Int, r: Double) => Right(l < r)
-                                    case (l: String, r: String) => Right(l < r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case LESS_EQUAL =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l <= r)
-                                    case (l: Int, r: Int) => Right(l <= r)
-                                    case (l: Double, r: Int) => Right(l <= r)
-                                    case (l: Int, r: Double) => Right(l <= r)
-                                    case (l: String, r: String) => Right(l <= r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case GREATER_EQUAL =>
-                                (l, r) match
-                                    case (l: Double, r: Double) => Right(l >= r)
-                                    case (l: Int, r: Int) => Right(l >= r)
-                                    case (l: Double, r: Int) => Right(l >= r)
-                                    case (l: Int, r: Double) => Right(l >= r)
-                                    case (l: String, r: String) => Right(l >= r)
-                                    case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                            case EQUAL_EQUAL => Right(isEqual(l, r))
-                            case BANG_EQUAL => Right(!isEqual(l, r))
-                            case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
-                yield res
+                if op.tokenType == QUESTION
+                    for
+                        l <- eval(left, env)
+                        res <- right match
+                            case Binary(v1, op, v2) =>
+                                if op.tokenType == COLON 
+                                    if isTruthy(l) then eval(v1, env) else eval(v2, env)
+                                else eval(right, env)
+                    yield res
+
+                else
+                    for
+                        l <- eval(left, env)
+                        r <- eval(right, env)
+                        res <- op.tokenType match
+                                case PLUS =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l + r)
+                                        case (l: Int, r: Int) => Right(l + r)
+                                        case (l: Double, r: Int) => Right(l + r)
+                                        case (l: Int, r: Double) => Right(l + r)
+                                        case (l: String, r) => Right(l + r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case MINUS =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l - r)
+                                        case (l: Int, r: Int) => Right(l - r)
+                                        case (l: Double, r: Int) => Right(l - r)
+                                        case (l: Int, r: Double) => Right(l - r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case STAR =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l * r)
+                                        case (l: Int, r: Int) => Right(l * r)
+                                        case (l: Double, r: Int) => Right(l * r)
+                                        case (l: Int, r: Double) => Right(l * r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case SLASH =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l / r)
+                                        case (l: Int, r: Int) => 
+                                            if r == 0 
+                                                Left(RuntimeError(op, s"tried to divide $l by 0"))
+                                            else Right(l / r)
+                                        case (l: Double, r: Int) => Right(l / r)
+                                        case (l: Int, r: Double) => Right(l / r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case GREATER =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l > r)
+                                        case (l: Int, r: Int) => Right(l > r)
+                                        case (l: Double, r: Int) => Right(l > r)
+                                        case (l: Int, r: Double) => Right(l > r)
+                                        case (l: String, r: String) => Right(l > r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case LESS =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l < r)
+                                        case (l: Int, r: Int) => Right(l < r)
+                                        case (l: Double, r: Int) => Right(l < r)
+                                        case (l: Int, r: Double) => Right(l < r)
+                                        case (l: String, r: String) => Right(l < r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case LESS_EQUAL =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l <= r)
+                                        case (l: Int, r: Int) => Right(l <= r)
+                                        case (l: Double, r: Int) => Right(l <= r)
+                                        case (l: Int, r: Double) => Right(l <= r)
+                                        case (l: String, r: String) => Right(l <= r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case GREATER_EQUAL =>
+                                    (l, r) match
+                                        case (l: Double, r: Double) => Right(l >= r)
+                                        case (l: Int, r: Int) => Right(l >= r)
+                                        case (l: Double, r: Int) => Right(l >= r)
+                                        case (l: Int, r: Double) => Right(l >= r)
+                                        case (l: String, r: String) => Right(l >= r)
+                                        case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                                case EQUAL_EQUAL => Right(isEqual(l, r))
+                                case BANG_EQUAL => Right(!isEqual(l, r))
+                                case _ => Left(RuntimeError(op, s"unsupported operation ${op.lexeme} between $l: ${l.getClass.getSimpleName} and $r: ${r.getClass.getSimpleName}"))
+                    yield res
         
             case Variable(v) =>
                 env.get(v).map(res => Right(res)).getOrElse(Left(RuntimeError(v, s"variable ${v.lexeme} is nil")))
@@ -120,7 +131,7 @@ object Interpreter:
                         if !isTruthy(l) then Right(l) else eval(right, env)
                 yield res
 
-            case Nil => Right(())
+            case Nil => Right(null)
     
     def evalStmt(stmt: Stmt, env: Environment, inRepl: Boolean): Either[Error, Environment] =
         stmt match
@@ -134,10 +145,7 @@ object Interpreter:
             case Expression(expr) => 
                 val out = eval(expr, env)
                 if inRepl
-                    out.fold({
-                        case e@RuntimeError(_, _) => runtimeError(e)
-                        case _ =>
-                        }, println)
+                    out.foreach(println)
                 out.map(_ => env)
 
             case Var(name, expr) =>
@@ -155,6 +163,14 @@ object Interpreter:
                     else
                         elseBranch.map(e => evalStmt(e, env, inRepl)).getOrElse(Right(env))
                 yield env
+
+            case w@While(cond, stmt) =>
+                for
+                    c <- eval(cond, env)
+                    e <- if isTruthy(c) 
+                        evalStmt(stmt, env, inRepl).flatMap(_ => evalStmt(w, env, inRepl))
+                        else Right(env)
+                yield e
 
 
     def interpret(stmts: Vector[Stmt], env: Environment, inRepl: Boolean): Either[Error, Environment] =

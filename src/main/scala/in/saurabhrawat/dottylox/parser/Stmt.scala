@@ -8,3 +8,5 @@ enum Stmt:
     case Var(name: Token, init: Option[Expr] = None)
     case Block(stmts: Vector[Stmt])
     case If(condition: Expr, thenBranch: Stmt, elseBranch: Option[Stmt])
+    case While(condition: Expr, body: Stmt)
+    case Empty
