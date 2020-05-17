@@ -1,15 +1,15 @@
 package in.saurabhrawat.dottylox
 
-enum Error {
+enum Error:
   case ParseError
   case RuntimeError(op: Token, erMsg: String)
-}
+  case ReturnVal(value: Result)
 
 import Error._
 
 type LiteralType = String | Double | Int | Boolean
 
-type Result = String | Int | Double | Boolean| Unit
+type Result = Any
 
 case class Token(tokenType: TokenType, lexeme: String, literal: Option[LiteralType], line: Int):
     override def toString() = s"$tokenType $lexeme $literal"

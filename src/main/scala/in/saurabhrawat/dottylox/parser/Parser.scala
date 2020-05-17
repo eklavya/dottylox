@@ -9,6 +9,7 @@ import in.saurabhrawat.dottylox.Error._
 import in.saurabhrawat.dottylox.Error
 
 
+
 class Parser(tokens: ArrayList[Token]):
 
     private var current = 0
@@ -16,7 +17,7 @@ class Parser(tokens: ArrayList[Token]):
     def expression() = assignment()
 
     def assignment(): Either[Error, Expr] = 
-        val left = comma()
+        val left = question()
         if matchOp(EQUAL)
             val equals = previous()
             for
@@ -29,7 +30,6 @@ class Parser(tokens: ArrayList[Token]):
             yield res
         else left
 
-    def comma() = getExpression(question, COMMA)
 
     def getExpression(getExp: () => Either[Error, Expr], ops: TokenType*): Either[Error, Expr] =
         var e = getExp()
@@ -125,7 +125,42 @@ class Parser(tokens: ArrayList[Token]):
             yield
                 Unary(op, right)
         else
-            primary()
+            call()
+
+    def call() =
+        def getChain(expr: Expr): Either[Error, Expr] =
+            if matchOp(LEFT_PAREN)
+                finishCall(expr).flatMap(getChain)
+            else Right(expr)
+
+        for
+            expr <- primary()
+            res <- getChain(expr)
+        yield res
+    
+    def finishCall(callee: Expr): Either[Error, Expr] =
+        def getArgs(args: Vector[Stmt]): Either[Error, Vector[Stmt]] =
+            if args.length > 254
+                Left(RuntimeError(peek(), "Cannot have more than 255 arguments"))
+            else if matchOp(COMMA)
+                val expr = if matchOp(FUN)
+                        function("function", true)
+                        else expression().map(e => Expression(e))
+                expr.flatMap(e => getArgs(args :+ e))
+            else Right(args)
+
+        for
+            args <- if !check(RIGHT_PAREN)
+                for
+                    first <- if matchOp(FUN)
+                        function("function", true)
+                        else expression().map(e => Expression(e))
+                    all <- getArgs(Vector(first))
+                yield all
+                else Right(Vector.empty)
+            paren <- consume(RIGHT_PAREN, "Expected ) after arguments")
+        yield Call(callee, paren, args)
+
 
     def primary(): Either[Error, Expr] =
         val token = advance()
@@ -197,6 +232,8 @@ class Parser(tokens: ArrayList[Token]):
             whileStmt()
         else if matchOp(FOR)
             forStmt()
+        else if matchOp(RETURN)
+            returnStmt()
         else expressionStatement()
 
     def varDeclaration() =
@@ -211,12 +248,52 @@ class Parser(tokens: ArrayList[Token]):
             
 
     def declaration() =
-        val d = if matchOp(VAR) then varDeclaration() else statement()
+        val d = 
+            if matchOp(VAR) 
+                varDeclaration() 
+            else if matchOp(FUN)
+                function("function", false)
+            else statement()
         if d.isLeft
             synchronise()
             Right(Expression(Nil))
         else d
 
+    def returnStmt() =
+        val keyword = previous()
+        if !check(SEMICOLON)
+            for
+               e <- expression()
+               _ <- consume(SEMICOLON, "Expected ; after return")
+            yield Return(keyword, Some(e))
+        else 
+            consume(SEMICOLON, "Expected ; after return").map(_ => Return(keyword))
+            
+    def function(kind: String, anon: Boolean) =
+        def getParams(params: Vector[Token] = Vector.empty): Either[Error, Vector[Token]] =
+            if params.length > 255
+                Left(RuntimeError(peek(), "Can not have more than 255 parameters"))
+            else 
+                consume(IDENTIFIER, "Expected parameter name").flatMap { p =>
+                    if matchOp(COMMA)
+                        getParams(params :+ p)
+                    else Right(params :+ p)
+                }
+
+        for
+            name <- if anon
+                Right(Token(IDENTIFIER, "", None, peek().line))
+                else consume(IDENTIFIER, s"Expected $kind name")
+            _ <- consume(LEFT_PAREN, s"Expected ( after $kind name")
+            params <- if !check(RIGHT_PAREN)
+                getParams()
+                else Right(Vector.empty)
+            _ <- consume(RIGHT_PAREN, "Expected ) after parameters")
+            _ <- consume(LEFT_BRACE, s"Expected { before $kind body")
+            body <- block()
+        yield 
+            FuncStmt(name, params, body)
+        
     def block(stmts: Vector[Stmt] = Vector.empty): Either[Error, Stmt] =
         if !check(RIGHT_BRACE) && !isAtEnd()
             declaration().flatMap(d => block(stmts :+ d))

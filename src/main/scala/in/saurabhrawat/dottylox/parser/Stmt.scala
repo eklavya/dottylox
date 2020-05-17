@@ -9,4 +9,7 @@ enum Stmt:
     case Block(stmts: Vector[Stmt])
     case If(condition: Expr, thenBranch: Stmt, elseBranch: Option[Stmt])
     case While(condition: Expr, body: Stmt)
+    case FuncStmt(name: Token, params: Vector[Token], body: Stmt)
+    // case Lambda(params: Vector[Token], body: Stmt)
+    case Return(keyword: Token, value: Option[Expr] = None)
     case Empty

@@ -10,5 +10,6 @@ enum Expr {
     case Variable(name: Token)
     case Assign(name: Token, value: Expr)
     case Logical(left: Expr, op: Token, right: Expr)
+    case Call(callee: Expr, paren: Token, args: Vector[Stmt])
     case Nil
 }

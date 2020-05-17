@@ -48,12 +48,12 @@ object Main:
           case ParseError =>
           case e@RuntimeError(_, _) => runtimeError(e)
         }
-        ret.foreach { newEnv =>
+        ret.foreach { (newEnv, _) =>
           env = newEnv
         }
 
 
-  def run(source: String, env: Environment, inRepl: Boolean): Either[Error, Environment] =
+  def run(source: String, env: Environment, inRepl: Boolean): Either[Error, (Environment, Result)] =
     val scanner = new Scanner(source)
     val tokens = scanner.scanTokens()
     // println(tokens)
