@@ -5,13 +5,10 @@ import in.saurabhrawat.dottylox.Result
 import in.saurabhrawat.dottylox.Error._
 import in.saurabhrawat.dottylox.Error
 
-class Environment(enclosing: Option[Environment] = None):
-
-    val variables = collection.mutable.Map.empty[String, Option[Result]]
+case class Environment(enclosing: Option[Environment] = None, variables: Map[String, Option[Result]] = Map.empty):
 
     def define(name: String, value: Option[Result]): Environment =
-        variables += (name -> value)
-        this
+        this.copy(variables = variables + (name -> value))
 
     def get(name: Token): Option[Result] =
         variables.get(name.lexeme).orElse(enclosing.map(_.get(name))).flatten
